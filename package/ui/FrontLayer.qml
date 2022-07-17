@@ -36,7 +36,7 @@ Item {
         Repeater {
             model: (indicator.isTask && (indicator.isActive || indicator.hasActive))
                    || (indicator.isApplet && indicator.isActive && !indicator.isSquare) ? 1 : 0
-            delegate: indicator.configuration.style === 0 /*Triangles*/ ? triangleComponent : circleComponent
+            delegate: indicator.configuration.style === 0 /*Triangles*/ ? barComponent : circleComponent
         }
     }
 
@@ -52,7 +52,7 @@ Item {
 
         Repeater {
             model: Math.min(3, indicator.windowsCount)
-            delegate: indicator.configuration.style === 0 /*Triangles*/ ? triangleComponent : circleComponent
+            delegate: indicator.configuration.style === 0 /*Triangles*/ ? barComponent : circleComponent
         }
     }
 
@@ -148,7 +148,85 @@ Item {
         }
     }
 
-    //! Triangle Indicator Component
+    //! Bar Indicator Component
+    Component {
+        id: barComponent
+        Canvas {
+            id: canvas
+            width: indicator.currentIconSize / 6
+            height: width
+
+            rotation: {
+                if (!parent.reversed) {
+                    if (plasmoid.location === PlasmaCore.Types.BottomEdge) {
+                        return 0;
+                    } else if (plasmoid.location === PlasmaCore.Types.LeftEdge) {
+                        return 90;
+                    } else if (plasmoid.location === PlasmaCore.Types.TopEdge) {
+                        return 180;
+                    } else if (plasmoid.location === PlasmaCore.Types.RightEdge) {
+                        return 270;
+                    }
+                } else {
+                    if (plasmoid.location === PlasmaCore.Types.BottomEdge) {
+                        return 180;
+                    } else if (plasmoid.location === PlasmaCore.Types.LeftEdge) {
+                        return 270;
+                    } else if (plasmoid.location === PlasmaCore.Types.TopEdge) {
+                        return 0;
+                    } else if (plasmoid.location === PlasmaCore.Types.RightEdge) {
+                        return 90;
+                    }
+                }
+
+                return 0;
+            }
+
+            readonly property int lineWidth: 2
+
+            Connections {
+                target: root
+                onActiveColorChanged: canvas.requestPaint();
+                onBackgroundColorChanged: canvas.requestPaint();
+                onOutlineColorChanged: canvas.requestPaint();
+            }
+
+            Connections {
+                target: frontLayer
+                onFillShapesBackgroundChanged: requestPaint();
+            }
+
+
+            onPaint: {
+                var ctx = getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.strokeStyle = root.outlineColor;
+                ctx.lineWidth = lineWidth;
+
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height);
+                ctx.lineTo(canvas.width/2, 0);
+                ctx.lineTo(canvas.width, canvas.height);
+                ctx.lineTo(0, canvas.height);
+                ctx.closePath();
+                ctx.stroke();
+
+                ctx.strokeStyle = root.activeColor;
+                ctx.fillStyle = fillShapesBackground ? root.activeColor : root.backgroundColor;
+
+                ctx.beginPath();
+                ctx.moveTo(lineWidth, canvas.height - lineWidth);
+                ctx.lineTo(canvas.width/2, lineWidth);
+                ctx.lineTo(canvas.width - lineWidth, canvas.height - lineWidth);
+                ctx.lineTo(lineWidth, canvas.height - lineWidth);
+                ctx.closePath();
+                ctx.stroke();
+                ctx.fill();
+            }
+        }
+    }
+
+    //! Circle Indicator Component
     Component {
         id: circleComponent
         Rectangle {
